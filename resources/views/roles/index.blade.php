@@ -99,7 +99,7 @@
             @method('PUT')
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Kode Role</label>
-                <input type="text" id="edit_code" name="code" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-mono bg-gray-100" disabled>
+                <input type="text" id="edit_code" name="code" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-mono bg-gray-50">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama Role</label>

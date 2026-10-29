@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -11,7 +12,8 @@ class UserController extends Controller
     public function index()
     {
         $users = User::paginate(10);
-        return view('settings.index', compact('users'));
+        $roles = Role::all();
+        return view('settings.index', compact('users', 'roles'));
     }
 
     public function create()
@@ -25,13 +27,13 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'in:admin,technician,user'],
+            'role' => ['required', 'exists:roles,code'],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
         User::create($validated);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
+        return redirect()->route('settings.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     public function edit(User $user)
@@ -44,17 +46,17 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['required', 'in:admin,technician,user'],
+            'role' => ['required', 'exists:roles,code'],
         ]);
 
         $user->update($validated);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
+        return redirect()->route('settings.users.index')->with('success', 'User berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+        return redirect()->route('settings.users.index')->with('success', 'User berhasil dihapus.');
     }
 }
