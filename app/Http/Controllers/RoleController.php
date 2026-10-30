@@ -23,7 +23,7 @@ class RoleController extends Controller
 
         Role::create($validated);
 
-        return redirect()->route('roles.index')->with('success', 'Role berhasil ditambahkan.');
+        return redirect()->route('settings.roles.index')->with('success', 'Role berhasil ditambahkan.');
     }
 
     public function update(Request $request, Role $role)
@@ -36,12 +36,12 @@ class RoleController extends Controller
 
         $role->update($validated);
 
-        return redirect()->route('roles.index')->with('success', 'Role berhasil diperbarui.');
+        return redirect()->route('settings.roles.index')->with('success', 'Role berhasil diperbarui.');
     }
 
     public function destroy(Role $role)
     {
         $role->delete();
-        return redirect()->route('roles.index')->with('success', 'Role berhasil dihapus.');
+        return redirect()->route('settings.roles.index')->with('success', 'Role berhasil dihapus.');
     }
 }
