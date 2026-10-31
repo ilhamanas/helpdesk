@@ -35,7 +35,17 @@ Route::middleware('auth')->group(function () {
         Route::delete('{role}', [RoleController::class, 'destroy'])->name('destroy');
     });
 
-    Route::resource('rfm', RfmController::class);
+    // RFM (Request For Maintenance)
+    Route::get('rfm', [RfmController::class, 'index'])->name('rfm.index');
+    Route::post('rfm', [RfmController::class, 'store'])->name('rfm.store');
+    Route::put('rfm/{rfm}', [RfmController::class, 'update'])->name('rfm.update');
+    Route::delete('rfm/{rfm}', [RfmController::class, 'destroy'])->name('rfm.destroy');
+    Route::post('rfm/{rfm}/approve', [RfmController::class, 'approve'])->name('rfm.approve');
+    Route::post('rfm/{rfm}/reject', [RfmController::class, 'reject'])->name('rfm.reject');
+    Route::post('rfm/{rfm}/start', [RfmController::class, 'start'])->name('rfm.start');
+    Route::post('rfm/{rfm}/resolve', [RfmController::class, 'resolve'])->name('rfm.resolve');
+    Route::post('rfm/{rfm}/review', [RfmController::class, 'review'])->name('rfm.review');
+
     Route::resource('daily-activity', DailyActivityController::class);
 });
 

@@ -2,63 +2,161 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Rfm;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class RfmController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public const CATEGORIES = ['Hardware', 'Software', 'Jaringan', 'Akun', 'Lainnya'];
+
+    public function index(Request $request)
     {
-        //
+        $rfms = Rfm::with(['user', 'assignedTo'])
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->priority, fn ($q, $p) => $q->where('priority', $p))
+            ->when($request->category, fn ($q, $c) => $q->where('category', $c))
+            ->when($request->search, fn ($q, $k) => $q->where('title', 'like', "%{$k}%"))
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('rfm.index', [
+            'rfms' => $rfms,
+            'categories' => self::CATEGORIES,
+            'technicians' => User::where('role', 'technician')->orderBy('name')->get(),
+            'pendingReview' => Rfm::pendingReview()->where('user_id', auth()->id())->get(),
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $this->ensureNoPendingReview();
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+            'category' => ['required', 'in:' . implode(',', self::CATEGORIES)],
+            'priority' => ['required', 'in:low,medium,high'],
+        ]);
+
+        $validated['user_id'] = auth()->id();
+        $validated['status'] = 'open';
+
+        Rfm::create($validated);
+
+        return redirect()->route('rfm.index')->with('success', 'Tiket RFM berhasil dibuat, menunggu approval HRD.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(Request $request, Rfm $rfm)
     {
-        //
+        abort_unless($rfm->user_id === auth()->id() && $rfm->status === 'open', 403);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+            'category' => ['required', 'in:' . implode(',', self::CATEGORIES)],
+            'priority' => ['required', 'in:low,medium,high'],
+        ]);
+
+        $rfm->update($validated);
+
+        return redirect()->route('rfm.index')->with('success', 'Tiket RFM berhasil diperbarui.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function destroy(Rfm $rfm)
     {
-        //
+        abort_unless(($rfm->user_id === auth()->id() && $rfm->status === 'open') || auth()->user()->role === 'admin', 403);
+
+        $rfm->delete();
+
+        return redirect()->route('rfm.index')->with('success', 'Tiket RFM berhasil dihapus.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function approve(Request $request, Rfm $rfm)
     {
-        //
+        abort_unless($rfm->status === 'open', 403);
+
+        $validated = $request->validate([
+            'assigned_to' => ['required', 'exists:users,id'],
+        ]);
+
+        $rfm->update([
+            'status' => 'assigned',
+            'assigned_to' => $validated['assigned_to'],
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return redirect()->route('rfm.index')->with('success', 'Tiket disetujui dan di-assign ke teknisi.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function reject(Request $request, Rfm $rfm)
     {
-        //
+        abort_unless($rfm->status === 'open', 403);
+
+        $validated = $request->validate([
+            'rejection_reason' => ['required', 'string'],
+        ]);
+
+        $rfm->update([
+            'status' => 'rejected',
+            'rejected_at' => now(),
+            'rejection_reason' => $validated['rejection_reason'],
+            'approved_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('rfm.index')->with('success', 'Tiket ditolak.');
+    }
+
+    public function start(Rfm $rfm)
+    {
+        abort_unless($rfm->status === 'assigned', 403);
+
+        $rfm->update(['status' => 'in_progress']);
+
+        return redirect()->route('rfm.index')->with('success', 'Tiket mulai dikerjakan.');
+    }
+
+    public function resolve(Rfm $rfm)
+    {
+        abort_unless($rfm->status === 'in_progress', 403);
+
+        $rfm->update(['status' => 'resolved', 'resolved_at' => now()]);
+
+        return redirect()->route('rfm.index')->with('success', 'Tiket selesai, menunggu review karyawan.');
+    }
+
+    public function review(Request $request, Rfm $rfm)
+    {
+        abort_unless($rfm->user_id === auth()->id() && $rfm->status === 'resolved', 403);
+
+        $validated = $request->validate([
+            'review_rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'review_comment' => ['nullable', 'string'],
+        ]);
+
+        $rfm->update([
+            'status' => 'closed',
+            'review_rating' => $validated['review_rating'],
+            'review_comment' => $validated['review_comment'] ?? null,
+            'reviewed_at' => now(),
+            'closed_at' => now(),
+        ]);
+
+        return redirect()->route('rfm.index')->with('success', 'Review terkirim, tiket ditutup.');
+    }
+
+    /** Review wajib: karyawan tidak bisa membuat tiket baru sebelum mereview tiket resolved miliknya. */
+    private function ensureNoPendingReview(): void
+    {
+        $pending = Rfm::pendingReview()->where('user_id', auth()->id())->exists();
+
+        if ($pending) {
+            throw ValidationException::withMessages([
+                'title' => 'Selesaikan review tiket yang sudah resolved terlebih dahulu.',
+            ]);
+        }
     }
 }

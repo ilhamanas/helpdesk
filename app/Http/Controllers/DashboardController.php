@@ -12,10 +12,20 @@ class DashboardController extends Controller
     {
         $totalRfm = Rfm::count();
         $openRfm = Rfm::where('status', 'open')->count();
+        $assignedRfm = Rfm::where('status', 'assigned')->count();
         $progressRfm = Rfm::where('status', 'in_progress')->count();
-        $resolvedRfm = Rfm::where('status', 'resolved')->count();
+        $pendingReviewRfm = Rfm::pendingReview()->count();
+        $resolvedRfm = Rfm::where('status', 'closed')->count();
         $activities = DailyActivity::latest()->take(5)->get();
 
-        return view('dashboard', compact('totalRfm', 'openRfm', 'progressRfm', 'resolvedRfm', 'activities'));
+        return view('dashboard', compact(
+            'totalRfm',
+            'openRfm',
+            'assignedRfm',
+            'progressRfm',
+            'pendingReviewRfm',
+            'resolvedRfm',
+            'activities'
+        ));
     }
 }

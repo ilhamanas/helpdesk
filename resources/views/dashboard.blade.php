@@ -5,21 +5,29 @@
 @endsection
 
 @section('content')
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-600">
+<div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-indigo-600">
         <h3 class="text-gray-600 text-sm font-semibold mb-2">Total RFM</h3>
         <p class="text-3xl font-bold text-gray-800">{{ $totalRfm }}</p>
     </div>
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
-        <h3 class="text-gray-600 text-sm font-semibold mb-2">Open</h3>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-yellow-500">
+        <h3 class="text-gray-600 text-sm font-semibold mb-2">Menunggu Approval</h3>
         <p class="text-3xl font-bold text-gray-800">{{ $openRfm }}</p>
     </div>
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-        <h3 class="text-gray-600 text-sm font-semibold mb-2">In Progress</h3>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-sky-500">
+        <h3 class="text-gray-600 text-sm font-semibold mb-2">Assigned</h3>
+        <p class="text-3xl font-bold text-gray-800">{{ $assignedRfm }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500">
+        <h3 class="text-gray-600 text-sm font-semibold mb-2">Dikerjakan</h3>
         <p class="text-3xl font-bold text-gray-800">{{ $progressRfm }}</p>
     </div>
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-        <h3 class="text-gray-600 text-sm font-semibold mb-2">Resolved</h3>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-purple-500">
+        <h3 class="text-gray-600 text-sm font-semibold mb-2">Menunggu Review</h3>
+        <p class="text-3xl font-bold text-gray-800">{{ $pendingReviewRfm }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
+        <h3 class="text-gray-600 text-sm font-semibold mb-2">Closed</h3>
         <p class="text-3xl font-bold text-gray-800">{{ $resolvedRfm }}</p>
     </div>
 </div>
