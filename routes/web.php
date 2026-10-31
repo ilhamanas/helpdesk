@@ -19,20 +19,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     
-    // Master User (/settings/users)
-    Route::prefix('settings/users')->name('settings.users.')->group(function () {
-        Route::get('', [UserController::class, 'index'])->name('index');
-        Route::post('', [UserController::class, 'store'])->name('store');
-        Route::put('{user}', [UserController::class, 'update'])->name('update');
-        Route::delete('{user}', [UserController::class, 'destroy'])->name('destroy');
-    });
+    // Master User (/settings/users) — admin only
+    Route::middleware('role:admin')->group(function () {
+        Route::prefix('settings/users')->name('settings.users.')->group(function () {
+            Route::get('', [UserController::class, 'index'])->name('index');
+            Route::post('', [UserController::class, 'store'])->name('store');
+            Route::put('{user}', [UserController::class, 'update'])->name('update');
+            Route::delete('{user}', [UserController::class, 'destroy'])->name('destroy');
+        });
 
-    // Hak Akses (/settings/roles)
-    Route::prefix('settings/roles')->name('settings.roles.')->group(function () {
-        Route::get('', [RoleController::class, 'index'])->name('index');
-        Route::post('', [RoleController::class, 'store'])->name('store');
-        Route::put('{role}', [RoleController::class, 'update'])->name('update');
-        Route::delete('{role}', [RoleController::class, 'destroy'])->name('destroy');
+        // Hak Akses (/settings/roles) — admin only
+        Route::prefix('settings/roles')->name('settings.roles.')->group(function () {
+            Route::get('', [RoleController::class, 'index'])->name('index');
+            Route::post('', [RoleController::class, 'store'])->name('store');
+            Route::put('{role}', [RoleController::class, 'update'])->name('update');
+            Route::delete('{role}', [RoleController::class, 'destroy'])->name('destroy');
+        });
     });
 
     // RFM (Request For Maintenance)
@@ -40,11 +42,12 @@ Route::middleware('auth')->group(function () {
     Route::post('rfm', [RfmController::class, 'store'])->name('rfm.store');
     Route::put('rfm/{rfm}', [RfmController::class, 'update'])->name('rfm.update');
     Route::delete('rfm/{rfm}', [RfmController::class, 'destroy'])->name('rfm.destroy');
-    Route::post('rfm/{rfm}/approve', [RfmController::class, 'approve'])->name('rfm.approve');
-    Route::post('rfm/{rfm}/reject', [RfmController::class, 'reject'])->name('rfm.reject');
-    Route::post('rfm/{rfm}/start', [RfmController::class, 'start'])->name('rfm.start');
-    Route::post('rfm/{rfm}/resolve', [RfmController::class, 'resolve'])->name('rfm.resolve');
     Route::post('rfm/{rfm}/review', [RfmController::class, 'review'])->name('rfm.review');
+
+    Route::post('rfm/{rfm}/approve', [RfmController::class, 'approve'])->name('rfm.approve')->middleware('role:hrd,admin');
+    Route::post('rfm/{rfm}/reject', [RfmController::class, 'reject'])->name('rfm.reject')->middleware('role:hrd,admin');
+    Route::post('rfm/{rfm}/start', [RfmController::class, 'start'])->name('rfm.start')->middleware('role:technician,admin');
+    Route::post('rfm/{rfm}/resolve', [RfmController::class, 'resolve'])->name('rfm.resolve')->middleware('role:technician,admin');
 
     Route::resource('daily-activity', DailyActivityController::class);
 });

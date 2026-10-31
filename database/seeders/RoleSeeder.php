@@ -13,7 +13,7 @@ class RoleSeeder extends Seeder
             ['code' => 'admin', 'name' => 'Administrator', 'description' => 'Akses penuh sistem'],
             ['code' => 'hrd', 'name' => 'HRD', 'description' => 'Approval dan assign tiket RFM'],
             ['code' => 'technician', 'name' => 'IT / Teknisi', 'description' => 'Mengerjakan tiket RFM'],
-            ['code' => 'user', 'name' => 'Karyawan', 'description' => 'Membuat tiket RFM'],
+            ['code' => 'staff', 'name' => 'Karyawan', 'description' => 'Membuat tiket RFM'],
         ];
 
         foreach ($roles as $role) {

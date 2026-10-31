@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Rfm;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class RfmController extends Controller
@@ -13,7 +14,12 @@ class RfmController extends Controller
 
     public function index(Request $request)
     {
+        $role = auth()->user()->role;
+
         $rfms = Rfm::with(['user', 'assignedTo'])
+            // staff hanya lihat tiketnya sendiri, technician hanya tiket yang di-assign ke dia
+            ->when($role === 'staff', fn ($q) => $q->where('user_id', auth()->id()))
+            ->when($role === 'technician', fn ($q) => $q->where('assigned_to', auth()->id()))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->priority, fn ($q, $p) => $q->where('priority', $p))
             ->when($request->category, fn ($q, $c) => $q->where('category', $c))
@@ -67,7 +73,9 @@ class RfmController extends Controller
 
     public function destroy(Rfm $rfm)
     {
-        abort_unless(($rfm->user_id === auth()->id() && $rfm->status === 'open') || auth()->user()->role === 'admin', 403);
+        $ownOpenTicket = $rfm->user_id === auth()->id() && $rfm->status === 'open';
+
+        abort_unless($ownOpenTicket || auth()->user()->role === 'admin', 403);
 
         $rfm->delete();
 
@@ -79,7 +87,10 @@ class RfmController extends Controller
         abort_unless($rfm->status === 'open', 403);
 
         $validated = $request->validate([
-            'assigned_to' => ['required', 'exists:users,id'],
+            'assigned_to' => [
+                'required',
+                Rule::exists('users', 'id')->where('role', 'technician'),
+            ],
         ]);
 
         $rfm->update([
@@ -113,6 +124,7 @@ class RfmController extends Controller
     public function start(Rfm $rfm)
     {
         abort_unless($rfm->status === 'assigned', 403);
+        $this->ensureAssignedTechnician($rfm);
 
         $rfm->update(['status' => 'in_progress']);
 
@@ -122,10 +134,20 @@ class RfmController extends Controller
     public function resolve(Rfm $rfm)
     {
         abort_unless($rfm->status === 'in_progress', 403);
+        $this->ensureAssignedTechnician($rfm);
 
         $rfm->update(['status' => 'resolved', 'resolved_at' => now()]);
 
         return redirect()->route('rfm.index')->with('success', 'Tiket selesai, menunggu review karyawan.');
+    }
+
+    /** Middleware hanya cek role; teknisi tetap hanya boleh mengerjakan tiket yang di-assign ke dia. */
+    private function ensureAssignedTechnician(Rfm $rfm): void
+    {
+        abort_unless(
+            $rfm->assigned_to === auth()->id() || auth()->user()->role === 'admin',
+            403
+        );
     }
 
     public function review(Request $request, Rfm $rfm)
