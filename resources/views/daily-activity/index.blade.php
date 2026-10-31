@@ -51,6 +51,7 @@
     <table class="w-full text-sm">
         <thead class="border-b border-gray-200 bg-gray-50">
             <tr class="text-gray-700">
+                <th class="text-left py-4 px-4 font-semibold">No</th>
                 <th class="text-left py-4 px-4 font-semibold">Tanggal</th>
                 <th class="text-left py-4 px-4 font-semibold">Teknisi</th>
                 <th class="text-left py-4 px-4 font-semibold">Tiket</th>
@@ -65,6 +66,7 @@
         <tbody>
             @forelse($activities as $activity)
             <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                <td class="py-4 px-4 text-gray-500">{{ $activities->firstItem() + $loop->index }}</td>
                 <td class="py-4 px-4 text-gray-600 text-xs whitespace-nowrap">{{ $activity->date->format('d M Y') }}</td>
                 <td class="py-4 px-4 text-gray-700">{{ $activity->user->name ?? '-' }}</td>
                 <td class="py-4 px-4">
@@ -107,7 +109,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="{{ $isTechnician ? 7 : 6 }}" class="py-8 px-6 text-center text-gray-500">Belum ada aktivitas harian.</td>
+                <td colspan="{{ $isTechnician ? 8 : 7 }}" class="py-8 px-6 text-center text-gray-500">Belum ada aktivitas harian.</td>
             </tr>
             @endforelse
         </tbody>
