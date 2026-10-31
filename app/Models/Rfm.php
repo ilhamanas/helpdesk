@@ -10,6 +10,7 @@ class Rfm extends Model
     use HasFactory;
 
     protected $fillable = [
+        'rfm_number',
         'user_id',
         'title',
         'description',
@@ -70,5 +71,17 @@ class Rfm extends Model
     public function isPendingReview(): bool
     {
         return $this->status === 'resolved' && $this->reviewed_at === null;
+    }
+
+    /** Nomor dokumen berikutnya, mis. RFM/IT/0006. Naik terus, tidak reset bulanan. */
+    public static function nextNumber(string $prefix = 'RFM/IT/'): string
+    {
+        $last = static::where('rfm_number', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING(rfm_number, ?) AS UNSIGNED) DESC', [strlen($prefix) + 1])
+            ->value('rfm_number');
+
+        $seq = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
+
+        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
     }
 }

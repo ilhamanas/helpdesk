@@ -107,8 +107,9 @@
     <table class="w-full text-sm">
         <thead class="border-b border-gray-200 bg-gray-50">
             <tr class="text-gray-700">
-                <th class="text-left py-4 px-4 font-semibold">ID</th>
+                <th class="text-left py-4 px-4 font-semibold">No</th>
                 <th class="text-left py-4 px-4 font-semibold">Judul</th>
+                <th class="text-left py-4 px-4 font-semibold">No RFM</th>
                 <th class="text-left py-4 px-4 font-semibold">Kategori</th>
                 <th class="text-left py-4 px-4 font-semibold">Priority</th>
                 <th class="text-left py-4 px-4 font-semibold">Status</th>
@@ -121,13 +122,16 @@
         <tbody>
             @forelse($rfms as $rfm)
             <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                <td class="py-4 px-4 text-gray-700">{{ $rfm->id }}</td>
+                <td class="py-4 px-4 text-gray-500">{{ $rfms->firstItem() + $loop->index }}</td>
                 <td class="py-4 px-4">
                     <p class="font-medium text-gray-900">{{ $rfm->title }}</p>
                     <p class="text-xs text-gray-500 mt-0.5">{{ Str::limit($rfm->description, 60) }}</p>
                     @if($rfm->status === 'rejected' && $rfm->rejection_reason)
                         <p class="text-xs text-red-600 mt-1">Alasan: {{ $rfm->rejection_reason }}</p>
                     @endif
+                </td>
+                <td class="py-4 px-4">
+                    <span class="font-mono text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">{{ $rfm->rfm_number ?? '-' }}</span>
                 </td>
                 <td class="py-4 px-4 text-gray-600">{{ $rfm->category }}</td>
                 <td class="py-4 px-4">
@@ -208,7 +212,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="9" class="py-8 px-6 text-center text-gray-500">Belum ada tiket RFM</td>
+                <td colspan="10" class="py-8 px-6 text-center text-gray-500">Belum ada tiket RFM</td>
             </tr>
             @endforelse
         </tbody>
@@ -419,19 +423,19 @@ function openEditModal(rfm) {
 }
 
 function openApproveModal(rfm) {
-    document.getElementById('approveTicketTitle').textContent = `#${rfm.id} — ${rfm.title}`;
+    document.getElementById('approveTicketTitle').textContent = `${rfm.rfm_number ?? '#' + rfm.id} — ${rfm.title}`;
     document.getElementById('approveForm').action = `${rfmBase}/${rfm.id}/approve`;
     openModal('approveModal');
 }
 
 function openRejectModal(rfm) {
-    document.getElementById('rejectTicketTitle').textContent = `#${rfm.id} — ${rfm.title}`;
+    document.getElementById('rejectTicketTitle').textContent = `${rfm.rfm_number ?? '#' + rfm.id} — ${rfm.title}`;
     document.getElementById('rejectForm').action = `${rfmBase}/${rfm.id}/reject`;
     openModal('rejectModal');
 }
 
 function openReviewModal(rfm) {
-    document.getElementById('reviewTicketTitle').textContent = `#${rfm.id} — ${rfm.title}`;
+    document.getElementById('reviewTicketTitle').textContent = `${rfm.rfm_number ?? '#' + rfm.id} — ${rfm.title}`;
     document.getElementById('reviewForm').action = `${rfmBase}/${rfm.id}/review`;
     document.getElementById('reviewForm').querySelectorAll('input[name="review_rating"]').forEach(el => el.checked = false);
     openModal('reviewModal');

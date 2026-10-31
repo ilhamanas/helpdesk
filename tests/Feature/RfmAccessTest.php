@@ -131,4 +131,43 @@ class RfmAccessTest extends TestCase
 
         $this->assertSame(1, Rfm::where('user_id', $staff->id)->count());
     }
+
+    public function test_new_ticket_gets_sequential_rfm_number(): void
+    {
+        $staff = $this->makeUser('staff');
+
+        $this->actingAs($staff)->post(route('rfm.store'), [
+            'title' => 'Tiket A',
+            'description' => 'Deskripsi',
+            'category' => 'Hardware',
+            'priority' => 'low',
+        ])->assertRedirect(route('rfm.index'));
+
+        $this->actingAs($staff)->post(route('rfm.store'), [
+            'title' => 'Tiket B',
+            'description' => 'Deskripsi',
+            'category' => 'Software',
+            'priority' => 'low',
+        ])->assertRedirect(route('rfm.index'));
+
+        $numbers = Rfm::where('user_id', $staff->id)->orderBy('id')->pluck('rfm_number');
+
+        $this->assertMatchesRegularExpression('#^RFM/IT/\d{4}$#', $numbers[0]);
+        $this->assertSame(
+            (int) substr($numbers[0], 7) + 1,
+            (int) substr($numbers[1], 7)
+        );
+    }
+
+    public function test_index_shows_rfm_number_column(): void
+    {
+        $staff = $this->makeUser('staff');
+        $rfm = $this->makeRfm($staff, ['rfm_number' => Rfm::nextNumber()]);
+
+        $this->actingAs($staff)
+            ->get(route('rfm.index'))
+            ->assertOk()
+            ->assertSee('No RFM')
+            ->assertSee($rfm->rfm_number);
+    }
 }

@@ -50,7 +50,18 @@ class RfmController extends Controller
         $validated['user_id'] = auth()->id();
         $validated['status'] = 'open';
 
-        Rfm::create($validated);
+        // Retry sekali kalau nomor bentrok karena dua request dibuat bersamaan.
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                $validated['rfm_number'] = Rfm::nextNumber();
+                Rfm::create($validated);
+                break;
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                if ($attempt >= 2) {
+                    throw $e;
+                }
+            }
+        }
 
         return redirect()->route('rfm.index')->with('success', 'Tiket RFM berhasil dibuat, menunggu approval HRD.');
     }
