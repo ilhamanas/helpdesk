@@ -60,26 +60,32 @@
 </div>
 
 <div class="bg-white rounded-lg shadow p-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activities</h3>
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Aktivitas Terbaru</h3>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="border-b border-gray-200">
                 <tr class="text-gray-600">
+                    <th class="text-left py-3 px-4">Waktu</th>
                     <th class="text-left py-3 px-4">User</th>
-                    <th class="text-left py-3 px-4">Activity</th>
-                    <th class="text-left py-3 px-4">Date</th>
+                    <th class="text-left py-3 px-4">Aktivitas</th>
+                    <th class="text-left py-3 px-4">Tiket</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($activities as $activity)
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="py-3 px-4">{{ $activity->user->name }}</td>
-                    <td class="py-3 px-4">{{ $activity->activity_type }}</td>
-                    <td class="py-3 px-4">{{ $activity->date->format('M d, Y') }}</td>
+                    <td class="py-3 px-4 whitespace-nowrap">{{ $activity['at']->format('d M Y H:i') }}</td>
+                    <td class="py-3 px-4">{{ $activity['user'] }}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-block px-2 py-1 rounded text-xs font-semibold {{ $activity['badge'] }}">
+                            {{ $activity['action'] }}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">{{ $activity['ticket'] }}</td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="py-4 px-4 text-center text-gray-500">No activities yet</td>
+                    <td colspan="4" class="py-4 px-4 text-center text-gray-500">Belum ada aktivitas.</td>
                 </tr>
                 @endforelse
             </tbody>

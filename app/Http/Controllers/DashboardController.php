@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $progressRfm = Rfm::where('status', 'in_progress')->count();
         $pendingReviewRfm = Rfm::pendingReview()->count();
         $resolvedRfm = Rfm::where('status', 'closed')->count();
-        $activities = DailyActivity::latest()->take(5)->get();
+        $activities = $this->recentActivities();
 
         $statusCounts = Rfm::selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
@@ -93,5 +93,101 @@ class DashboardController extends Controller
             'priorityChart',
             'trendChart'
         ));
+    }
+
+    private function recentActivities()
+    {
+        $user = auth()->user();
+        $events = collect();
+
+        $ticketScope = function () use ($user) {
+            $query = Rfm::query();
+
+            if ($user->role === 'staff') {
+                $query->where('user_id', $user->id);
+            } elseif ($user->role === 'technician') {
+                $query->where('assigned_to', $user->id);
+            }
+
+            return $query;
+        };
+
+        $ticketScope()->with('user')->latest('created_at')->take(5)->get()
+            ->each(fn ($rfm) => $events->push($this->ticketEvent(
+                $rfm->created_at,
+                $rfm->user?->name,
+                'Membuat tiket',
+                'bg-indigo-100 text-indigo-700',
+                $rfm
+            )));
+
+        $ticketScope()->with('approvedBy')->whereNotNull('approved_at')
+            ->latest('approved_at')->take(5)->get()
+            ->each(fn ($rfm) => $events->push($this->ticketEvent(
+                $rfm->approved_at,
+                $rfm->approvedBy?->name,
+                'Menyetujui tiket',
+                'bg-green-100 text-green-700',
+                $rfm
+            )));
+
+        $ticketScope()->with('approvedBy')->whereNotNull('rejected_at')
+            ->latest('rejected_at')->take(5)->get()
+            ->each(fn ($rfm) => $events->push($this->ticketEvent(
+                $rfm->rejected_at,
+                $rfm->approvedBy?->name,
+                'Menolak tiket',
+                'bg-red-100 text-red-700',
+                $rfm
+            )));
+
+        $ticketScope()->with('assignedTo')->whereNotNull('resolved_at')
+            ->latest('resolved_at')->take(5)->get()
+            ->each(fn ($rfm) => $events->push($this->ticketEvent(
+                $rfm->resolved_at,
+                $rfm->assignedTo?->name,
+                'Menyelesaikan tiket',
+                'bg-sky-100 text-sky-700',
+                $rfm
+            )));
+
+        $ticketScope()->with('user')->whereNotNull('reviewed_at')
+            ->latest('reviewed_at')->take(5)->get()
+            ->each(fn ($rfm) => $events->push($this->ticketEvent(
+                $rfm->reviewed_at,
+                $rfm->user?->name,
+                'Mereview & menutup tiket',
+                'bg-purple-100 text-purple-700',
+                $rfm
+            )));
+
+        DailyActivity::with('user')->whereIn('activity_type', ['login', 'logout'])
+            ->latest()->take(5)->get()
+            ->each(function ($activity) use ($events) {
+                $events->push([
+                    'at' => $activity->created_at,
+                    'user' => $activity->user?->name ?? '-',
+                    'action' => $activity->activity_type === 'login'
+                        ? 'Login ke sistem'
+                        : 'Logout dari sistem',
+                    'badge' => $activity->activity_type === 'login'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-gray-200 text-gray-700',
+                    'ticket' => '-',
+                ]);
+            });
+
+        return $events->sortByDesc('at')->take(5)->values();
+    }
+
+    private function ticketEvent($at, ?string $userName, string $action, string $badge, Rfm $rfm): array
+    {
+        return [
+            'at' => $at,
+            'user' => $userName ?? '-',
+            'action' => $action,
+            'badge' => $badge,
+            'ticket' => trim(($rfm->rfm_number ?? '-') . ' · ' . $rfm->title),
+        ];
     }
 }

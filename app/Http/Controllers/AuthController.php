@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\DailyActivity;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -23,6 +24,14 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+
+            DailyActivity::create([
+                'user_id' => Auth::id(),
+                'activity_type' => 'login',
+                'description' => 'Login ke sistem',
+                'date' => now()->toDateString(),
+            ]);
+
             return redirect()->intended('dashboard');
         }
 
@@ -58,6 +67,17 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+
+        if ($user) {
+            DailyActivity::create([
+                'user_id' => $user->id,
+                'activity_type' => 'logout',
+                'description' => 'Logout dari sistem',
+                'date' => now()->toDateString(),
+            ]);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
