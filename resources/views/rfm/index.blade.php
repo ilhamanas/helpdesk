@@ -5,6 +5,13 @@
 @endsection
 
 @section('content')
+{{-- Rating bintang kumulatif: radio urut terbalik, bintang setelah input checked jadi kosong. --}}
+<style>
+    #ratingStars input:checked ~ label svg { color: #fbbf24; }
+    #ratingStars label:hover svg,
+    #ratingStars label:hover ~ label svg { color: #fcd34d; }
+</style>
+
 @php
     $statusColors = [
         'open' => 'bg-yellow-100 text-yellow-700',
@@ -133,7 +140,7 @@
                         {{ $statusLabels[$rfm->status] ?? $rfm->status }}
                     </span>
                     @if($rfm->review_rating)
-                        <div class="text-xs text-amber-500 mt-1">{{ str_repeat('★', $rfm->review_rating) }}{{ str_repeat('☆', 5 - $rfm->review_rating) }}</div>
+                        <div class="text-xs text-amber-500 mt-1">{{ str_repeat('★', $rfm->review_rating) }}{{ str_repeat('☆', 5 - $rfm->review_rating) }} <span class="text-gray-500">{{ $rfm->review_rating }}/5</span></div>
                     @endif
                 </td>
                 <td class="py-4 px-4 text-gray-600">{{ $rfm->user->name ?? '-' }}</td>
@@ -365,11 +372,13 @@
             <p class="text-sm text-gray-600" id="reviewTicketTitle"></p>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Rating <span class="text-red-500">*</span></label>
-                <div class="flex items-center gap-2">
-                    @for($i = 1; $i <= 5; $i++)
-                        <label class="cursor-pointer">
+                {{-- Radio dirender terbalik (5→1) agar CSS sibling bisa mengisi semua bintang di kiri. --}}
+                <div class="flex flex-row-reverse justify-end gap-1" id="ratingStars">
+                    @for($i = 5; $i >= 1; $i--)
+                        <label class="cursor-pointer flex flex-col items-center group">
                             <input type="radio" name="review_rating" value="{{ $i }}" required class="peer sr-only">
-                            <svg class="w-7 h-7 text-gray-300 peer-checked:text-amber-400 hover:text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.922-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.196-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <svg class="w-8 h-8 text-gray-300 transition-colors peer-checked:text-amber-400 group-hover:text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.922-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.196-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <span class="text-xs text-gray-500 mt-0.5">{{ $i }}</span>
                         </label>
                     @endfor
                 </div>
@@ -416,6 +425,7 @@ function openRejectModal(rfm) {
 function openReviewModal(rfm) {
     document.getElementById('reviewTicketTitle').textContent = `#${rfm.id} — ${rfm.title}`;
     document.getElementById('reviewForm').action = `${rfmBase}/${rfm.id}/review`;
+    document.getElementById('reviewForm').querySelectorAll('input[name="review_rating"]').forEach(el => el.checked = false);
     openModal('reviewModal');
 }
 
