@@ -49,7 +49,15 @@ Route::middleware('auth')->group(function () {
     Route::post('rfm/{rfm}/start', [RfmController::class, 'start'])->name('rfm.start')->middleware('role:technician,admin');
     Route::post('rfm/{rfm}/resolve', [RfmController::class, 'resolve'])->name('rfm.resolve')->middleware('role:technician,admin');
 
-    Route::resource('daily-activity', DailyActivityController::class);
+    // Daily Activity — teknisi input; HRD/admin monitoring
+    Route::get('daily-activity', [DailyActivityController::class, 'index'])
+        ->name('daily-activity.index')->middleware('role:technician,hrd,admin');
+    Route::post('daily-activity', [DailyActivityController::class, 'store'])
+        ->name('daily-activity.store')->middleware('role:technician');
+    Route::put('daily-activity/{dailyActivity}', [DailyActivityController::class, 'update'])
+        ->name('daily-activity.update')->middleware('role:technician');
+    Route::delete('daily-activity/{dailyActivity}', [DailyActivityController::class, 'destroy'])
+        ->name('daily-activity.destroy')->middleware('role:technician');
 });
 
 Route::get('/', function () {
