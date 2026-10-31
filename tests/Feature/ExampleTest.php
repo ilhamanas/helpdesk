@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // Root redirect ke halaman login, bukan halaman publik.
+        $response->assertRedirect(route('login'));
     }
 }
