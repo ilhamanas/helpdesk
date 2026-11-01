@@ -7,6 +7,7 @@ use App\Http\Controllers\RfmController;
 use App\Http\Controllers\DailyActivityController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ReportController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -58,6 +59,9 @@ Route::middleware('auth')->group(function () {
         ->name('daily-activity.update')->middleware('role:technician');
     Route::delete('daily-activity/{dailyActivity}', [DailyActivityController::class, 'destroy'])
         ->name('daily-activity.destroy')->middleware('role:technician');
+
+    Route::get('report', [ReportController::class, 'index'])
+        ->name('report.index')->middleware('role:hrd,admin');
 });
 
 Route::get('/', function () {
