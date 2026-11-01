@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-<div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
     <div class="bg-white rounded-lg shadow p-5 border-l-4 border-indigo-600">
         <h3 class="text-gray-600 text-sm font-semibold mb-2">Total RFM</h3>
         <p class="text-3xl font-bold text-gray-800">{{ $totalRfm }}</p>
